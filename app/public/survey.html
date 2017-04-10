@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <title>Friend Finder - Survey</title>
+    >
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+
+    <link href="https://bootswatch.com/darkly/bootstrap.min.css" rel="stylesheet">
+    <link href="./css/style.css" rel="stylesheet">
+    <script
+    src="https://code.jquery.com/jquery-3.1.1.min.js"
+    integrity="sha256-hVVnYaiADRTO2PzUGmuLJr8BLUSjGIZsDYGmIJLv2b8="
+    crossorigin="anonymous">
+    </script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
+
+    <script src="https://use.fontawesome.com/c09fe9cceb.js"></script>
+    <script src="./js/questions.js"></script>   
+</head>
+<body>
+    <div class="container">
+        <div class = "row ">
+            <div class= "col-md-8 col-offset-md-4 well">
+                <h2>Survey
+                 <a href="/"><button type="button" class="pull-right">
+                 <i class="fa fa-home fa-sm" aria-hidden="true"></i></button></a> 
+                 </h2>
+                <hr>
+                <h3><strong>About You</strong></h3>
+                <h4>Name (Required)</h4>
+                <input type="text" name="name" id="name" class="form-control" required>
+                <h4>Link to your profile picture (Required)</h4>
+                <input type="text" name="photo" id="photo" class="form-control" required>
+            </div>    
+        </div>    
+        <hr>
+
+        <div class = "row">
+            <div class= "col-md-8 col-offset-md-4">
+                <div id="questions"></div>
+                <div>
+                    <button type="submit" class="btn btn-primary btn-block" id="submitBtn">
+                    <i class="fa fa-check-circle" aria-hidden="true"></i>
+                    Submit</button>
+                </div>   
+            </div>   
+        </div>     
+        <br>
+
+        <hr>
+        
+
+    </div> 
+
+    <!-- Modal -->
+    <div id="resultsModal" class="modal fade" tabindex="-1" role="dialog">
+      <div class="modal-dialog">
+        <!-- Modal content-->
+        <div class="modal-content">
+          <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+            <h4 class="modal-title">We found you a Friend!! :</h4>
+          </div>
+          <div class="modal-body">
+            <h3 id="friend-match-name"></h3>
+            <img id="friend-match-image" src="" alt="">
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+<script type="text/javascript">
+    var choices = ["1 (Strongly Disagree)","2","3","4","5 (Strongly Agree)"];
+    var questions = [
+        "You like being outdoors",
+        "You love pets",
+        "You like discussing politics",
+        "You love sports",
+        "You like being around your family",
+        "You like being around children",
+        "You love to dance?",
+        "You like being around other people",
+        "You like to be the center of attention",
+        "You rather stay in than be socializing"
+    ];
+    for (var i = 0; i < questions.length; i++) {
+        var questionDiv = $("<div class= 'well'>");
+        questionDiv.attr('id', 'tableWell-' + i+1)
+        questionDiv.addClass("form-group");
+        
+        var questionNumber = $("<h3>");
+        questionNumber.text("Question #" + (parseInt(i) + 1));
+        
+        var questionText = $("<h4>");
+        questionText.text(questions[i]);
+    
+        
+        var questionSelect = $("<select class='form-control question'>");
+        questionSelect.attr("id", "q" + (parseInt(i) + 1));
+        
+        for (var j = 0; j < choices.length; j++) {
+            var option = $("<option>");
+            option.attr("value", (parseInt(j) + 1));
+            option.text(choices[j]);
+            questionSelect.append(option);
+        }
+        questionDiv.append(questionNumber).append(questionText).append(questionSelect);
+        $("#questions").append(questionDiv);
+    }
+    $("#submitBtn").on("click", function(event) {
+        event.preventDefault();
+        var capturedInputValues = [];
+        $(".question").each(function() {
+            capturedInputValues.push($(this).val());
+        });
+        function validateForm() {
+          var isValid = true;
+          $('.form-control').each(function() {
+                if($(this).val() === ''){
+                    isValid = false;
+                }
+            });
+          return isValid;
+        }
+        if(validateForm()){
+            var inputFriend = {
+                name: $("#name").val().trim(),
+                photo: $("#photo").val().trim(),
+                scores: capturedInputValues
+            };
+            var currentURL = window.location.origin;
+            $.post(currentURL + "/api/friends", inputFriend)
+            .done(function(data) {
+                console.log("Friend matched response", data);
+                if(Object.keys(data).length > 1) {
+                    $("#friend-match-name").text(data.name).append('<br>');
+                    $("#friend-match-image").attr("src", data.photo).css({"max-height":"300px", "width": "300px"});
+                    $("#resultsModal").modal('toggle');
+                } else {
+                    $("#friend-match-name").text(data.error);
+                }
+                
+                $(".question").each(function() {
+                    $(this).val("");
+                });
+            });
+        }else{
+            alert("Fill out the required fields!");
+        }
+    });
+</script>
+
+</body>
+</html>
